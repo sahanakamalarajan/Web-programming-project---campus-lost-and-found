@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Lost & Found</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>Campus Lost & Found</h1>
+
+        <p class="subtitle">
+            Login to continue
+        </p>
+
+        <div class="tabs">
+
+            <button
+                type="button"
+                id="studentTab"
+                class="tab active"
+            >
+                Student
+            </button>
+
+            <button
+                type="button"
+                id="adminTab"
+                class="tab"
+            >
+                Admin
+            </button>
+
+        </div>
+
+        <div id="studentLogin">
+
+            <div class="form">
+
+                <input
+                    type="email"
+                    id="studentEmail"
+                    placeholder="Student Email"
+                >
+
+                <input
+                    type="password"
+                    id="studentPassword"
+                    placeholder="Password"
+                >
+
+                <button
+                    type="button"
+                    class="primary-btn"
+                    id="studentLoginButton"
+                >
+                    Student Login
+                </button>
+
+                <p
+                    id="studentMessage"
+                    class="message"
+                ></p>
+
+                <p class="links">
+                    <a href="register.html">
+                        Student Register
+                    </a>
+                </p>
+
+            </div>
+
+        </div>
+
+        <div id="adminLogin" class="hidden">
+
+            <div class="form">
+
+                <input
+                    type="email"
+                    id="adminEmail"
+                    placeholder="Admin Email"
+                >
+
+                <input
+                    type="password"
+                    id="adminPassword"
+                    placeholder="Password"
+                >
+
+                <button
+                    type="button"
+                    class="primary-btn"
+                    id="adminLoginButton"
+                >
+                    Admin Login
+                </button>
+
+                <p
+                    id="adminMessage"
+                    class="message"
+                ></p>
+
+                <p class="links">
+                    <a href="admin-register.html">
+                        Admin Register
+                    </a>
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+<script>
+
+const studentTab =
+    document.getElementById("studentTab");
+
+const adminTab =
+    document.getElementById("adminTab");
+
+const studentLogin =
+    document.getElementById("studentLogin");
+
+const adminLogin =
+    document.getElementById("adminLogin");
+
+studentTab.addEventListener(
+    "click",
+    function() {
+
+        studentLogin.classList.remove("hidden");
+        adminLogin.classList.add("hidden");
+
+        studentTab.classList.add("active");
+        adminTab.classList.remove("active");
+
+    }
+);
+
+adminTab.addEventListener(
+    "click",
+    function() {
+
+        adminLogin.classList.remove("hidden");
+        studentLogin.classList.add("hidden");
+
+        adminTab.classList.add("active");
+        studentTab.classList.remove("active");
+
+    }
+);
+
+document.getElementById(
+    "studentLoginButton"
+).addEventListener(
+    "click",
+    async function() {
+
+        const email =
+            document.getElementById(
+                "studentEmail"
+            ).value.trim();
+
+        const password =
+            document.getElementById(
+                "studentPassword"
+            ).value.trim();
+
+        if (!email || !password) {
+
+            showMessage(
+                "studentMessage",
+                "Please enter email and password.",
+                "red"
+            );
+
+            return;
+
+        }
+
+        showMessage(
+            "studentMessage",
+            "Logging in...",
+            "blue"
+        );
+
+        try {
+
+            const data =
+                await loginStudent(
+                    email,
+                    password
+                );
+
+            if (!data.student) {
+
+                showMessage(
+                    "studentMessage",
+                    data.message ||
+                    "Invalid student login.",
+                    "red"
+                );
+
+                return;
+
+            }
+
+            localStorage.setItem(
+                "currentStudent",
+                JSON.stringify(data.student)
+            );
+
+            localStorage.removeItem(
+                "currentAdmin"
+            );
+
+            showMessage(
+                "studentMessage",
+                "Login successful!",
+                "green"
+            );
+
+            setTimeout(
+                function() {
+
+                    window.location.href =
+                        "student.html";
+
+                },
+                700
+            );
+
+        } catch (error) {
+
+            showMessage(
+                "studentMessage",
+                "Cannot connect to backend server.",
+                "red"
+            );
+
+        }
+
+    }
+);
+
+document.getElementById(
+    "adminLoginButton"
+).addEventListener(
+    "click",
+    async function() {
+
+        const email =
+            document.getElementById(
+                "adminEmail"
+            ).value.trim();
+
+        const password =
+            document.getElementById(
+                "adminPassword"
+            ).value.trim();
+
+        if (!email || !password) {
+
+            showMessage(
+                "adminMessage",
+                "Please enter email and password.",
+                "red"
+            );
+
+            return;
+
+        }
+
+        showMessage(
+            "adminMessage",
+            "Logging in...",
+            "blue"
+        );
+
+        try {
+
+            const data =
+                await loginAdmin(
+                    email,
+                    password
+                );
+
+            if (!data.admin) {
+
+                showMessage(
+                    "adminMessage",
+                    data.message ||
+                    "Invalid admin login.",
+                    "red"
+                );
+
+                return;
+
+            }
+
+            localStorage.setItem(
+                "currentAdmin",
+                JSON.stringify(data.admin)
+            );
+
+            localStorage.removeItem(
+                "currentStudent"
+            );
+
+            showMessage(
+                "adminMessage",
+                "Admin login successful!",
+                "green"
+            );
+
+            setTimeout(
+                function() {
+
+                    window.location.href =
+                        "admin.html";
+
+                },
+                700
+            );
+
+        } catch (error) {
+
+            showMessage(
+                "adminMessage",
+                "Cannot connect to backend server.",
+                "red"
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>

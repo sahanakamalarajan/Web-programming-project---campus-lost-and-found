@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Campus Lost & Found</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+
+    <h2>Campus Lost & Found</h2>
+
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="location.reload()">Dashboard</button>
+        <button class="nav-btn" onclick="document.getElementById('reportsSection').scrollIntoView()">Reports</button>
+        <button class="nav-btn logout" onclick="logout()">Logout</button>
+    </div>
+
+</nav>
+
+<div class="container">
+
+    <div class="welcome">
+
+        <h1>Admin Dashboard</h1>
+
+        <p>
+            Welcome, <span id="adminName">Admin</span>.
+            Manage campus lost and found reports.
+        </p>
+
+    </div>
+
+    <div class="stats">
+
+        <div class="stat">
+            <p>Total Reports</p>
+            <h2 id="totalReports">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>Reported</p>
+            <h2 id="reportedCount">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>In Progress</p>
+            <h2 id="progressCount">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>Solved</p>
+            <h2 id="solvedCount">0</h2>
+        </div>
+
+    </div>
+
+    <div class="search-section">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by case ID, item, student or location">
+
+        <button
+            class="primary-btn"
+            onclick="searchReports()">
+            Search
+        </button>
+
+        <button
+            class="secondary-btn"
+            onclick="loadReports()">
+            Show All
+        </button>
+
+    </div>
+
+    <div class="card" id="reportsSection" style="max-width:none;">
+
+        <h2>All Reports</h2>
+
+        <p id="adminMessage" class="message"></p>
+
+        <div id="reportsList">
+            <p class="empty">Loading reports...</p>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+<script>
+
+const admin = getAdmin();
+
+if (!admin) {
+    window.location.href = "index.html";
+}
+
+document.getElementById("adminName").textContent = admin.name;
+
+let allReports = [];
+
+async function loadReports() {
+
+    const reports = await getAllReports();
+
+    if (!Array.isArray(reports)) {
+
+        document.getElementById("reportsList").innerHTML =
+            '<p class="empty">Unable to load reports.</p>';
+
+        return;
+    }
+
+    allReports = reports;
+
+    displayReports(reports);
+    updateStats(reports);
+
+}
+
+function updateStats(reports) {
+
+    const total = reports.length;
+
+    const reported =
+        reports.filter(report =>
+            report.status === "Reported"
+        ).length;
+
+    const progress =
+        reports.filter(report =>
+            report.status === "In Progress"
+        ).length;
+
+    const solved =
+        reports.filter(report =>
+            report.status === "Solved" ||
+            report.status === "Returned"
+        ).length;
+
+    document.getElementById("totalReports").textContent = total;
+    document.getElementById("reportedCount").textContent = reported;
+    document.getElementById("progressCount").textContent = progress;
+    document.getElementById("solvedCount").textContent = solved;
+
+}
+
+function displayReports(reports) {
+
+    const list = document.getElementById("reportsList");
+
+    if (reports.length === 0) {
+
+        list.innerHTML =
+            '<p class="empty">No reports found.</p>';
+
+        return;
+    }
+
+    list.innerHTML = reports.map(report => {
+
+        return `
+            <div class="report" style="margin-top:18px;">
+
+                <h2>${report.item_name}</h2>
+
+                <p class="detail">
+                    <strong>Case ID:</strong>
+                    <span class="case">${report.case_id}</span>
+                </p>
+
+                <p class="detail">
+                    <strong>Student:</strong>
+                    ${report.student_name}
+                </p>
+
+                <p class="detail">
+                    <strong>Email:</strong>
+                    ${report.student_email}
+                </p>
+
+                <p class="detail">
+                    <strong>Type:</strong>
+                    ${report.type}
+                </p>
+
+                <p class="detail">
+                    <strong>Category:</strong>
+                    ${report.category}
+                </p>
+
+                <p class="detail">
+                    <strong>Color:</strong>
+                    ${report.color}
+                </p>
+
+                <p class="detail">
+                    <strong>Location:</strong>
+                    ${report.location}
+                </p>
+
+                <p class="detail">
+                    <strong>Description:</strong>
+                    ${report.description}
+                </p>
+
+                <p class="detail">
+                    <strong>Current Status:</strong>
+                    <span class="status">${report.status}</span>
+                </p>
+
+                <label>
+                    <strong>Update Status</strong>
+                </label>
+
+                <select id="status-${report.case_id}">
+
+                    <option value="Reported"
+                        ${report.status === "Reported" ? "selected" : ""}>
+                        Reported
+                    </option>
+
+                    <option value="In Progress"
+                        ${report.status === "In Progress" ? "selected" : ""}>
+                        In Progress
+                    </option>
+
+                    <option value="Solved"
+                        ${report.status === "Solved" ? "selected" : ""}>
+                        Solved
+                    </option>
+
+                    <option value="Returned"
+                        ${report.status === "Returned" ? "selected" : ""}>
+                        Returned
+                    </option>
+
+                </select>
+
+                <br><br>
+
+                <label>
+                    <strong>Admin Remarks</strong>
+                </label>
+
+                <textarea
+                    id="remarks-${report.case_id}"
+                    placeholder="Enter remarks">${report.remarks || ""}</textarea>
+
+                <br>
+
+                <button
+                    class="success-btn"
+                    onclick="updateReport('${report.case_id}')">
+                    Update Report
+                </button>
+
+            </div>
+        `;
+
+    }).join("");
+
+}
+
+function searchReports() {
+
+    const search =
+        document.getElementById("searchInput")
+        .value
+        .toLowerCase()
+        .trim();
+
+    if (!search) {
+
+        displayReports(allReports);
+        return;
+    }
+
+    const filtered = allReports.filter(report => {
+
+        return (
+            report.case_id.toLowerCase().includes(search) ||
+            report.item_name.toLowerCase().includes(search) ||
+            report.student_name.toLowerCase().includes(search) ||
+            report.student_email.toLowerCase().includes(search) ||
+            report.location.toLowerCase().includes(search) ||
+            report.category.toLowerCase().includes(search)
+        );
+
+    });
+
+    displayReports(filtered);
+
+}
+
+async function updateReport(caseId) {
+
+    const status =
+        document.getElementById(
+            "status-" + caseId
+        ).value;
+
+    const remarks =
+        document.getElementById(
+            "remarks-" + caseId
+        ).value;
+
+    const result =
+        await updateReportStatus(
+            caseId,
+            status,
+            remarks
+        );
+
+    showMessage(
+        "adminMessage",
+        result.message || "Report updated.",
+        result.message &&
+        result.message.includes("updated")
+            ? "green"
+            : "red"
+    );
+
+    loadReports();
+
+}
+
+loadReports();
+
+</script>
+
+</body>
+</html>

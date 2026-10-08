@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Campus Lost & Found</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <h2>Campus Lost & Found</h2>
+
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="location.reload()">Dashboard</button>
+        <button class="nav-btn" onclick="document.getElementById('reportSection').scrollIntoView()">Report Item</button>
+        <button class="nav-btn" onclick="document.getElementById('reportsSection').scrollIntoView()">My Reports</button>
+        <button class="nav-btn" onclick="document.getElementById('notificationSection').scrollIntoView()">Notifications</button>
+        <button class="nav-btn logout" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="welcome">
+        <h1>Welcome, <span id="studentName">Student</span></h1>
+        <p>Report lost or found items and track their status.</p>
+    </div>
+
+    <div class="cards">
+
+        <div class="card" id="reportSection">
+            <h2>Report Lost / Found Item</h2>
+
+            <form id="reportForm" class="form">
+
+                <select id="type" required>
+                    <option value="">Select Report Type</option>
+                    <option value="Lost">Lost Item</option>
+                    <option value="Found">Found Item</option>
+                </select>
+
+                <input type="text" id="itemName" placeholder="Item Name" required>
+
+                <select id="category" required>
+                    <option value="">Select Category</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Books">Books</option>
+                    <option value="Wallet">Wallet</option>
+                    <option value="ID Card">ID Card</option>
+                    <option value="Keys">Keys</option>
+                    <option value="Bag">Bag</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <input type="text" id="color" placeholder="Color" required>
+
+                <input type="text" id="location" placeholder="Lost / Found Location" required>
+
+                <textarea id="description" placeholder="Description" required></textarea>
+
+                <button type="submit" class="primary-btn">Submit Report</button>
+
+                <p id="reportMessage" class="message"></p>
+
+            </form>
+        </div>
+
+        <div class="card" id="notificationSection">
+            <h2>Notifications</h2>
+
+            <button
+                class="success-btn"
+                onclick="markAllNotifications()">
+                Mark All as Read
+            </button>
+
+            <div id="notificationsList">
+                <p class="empty">Loading notifications...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card" id="reportsSection" style="margin-top:25px; max-width:none;">
+        <h2>My Reports</h2>
+
+        <div id="reportsList">
+            <p class="empty">Loading reports...</p>
+        </div>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+<script>
+
+const student = getStudent();
+
+if (!student) {
+    window.location.href = "index.html";
+}
+
+document.getElementById("studentName").textContent = student.name;
+
+document.getElementById("reportForm").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const reportData = {
+        caseId: generateCaseId(),
+        studentEmail: student.email,
+        studentName: student.name,
+        type: document.getElementById("type").value,
+        itemName: document.getElementById("itemName").value,
+        category: document.getElementById("category").value,
+        color: document.getElementById("color").value,
+        location: document.getElementById("location").value,
+        description: document.getElementById("description").value
+    };
+
+    const result = await submitReport(reportData);
+
+    if (result.message === "Report submitted successfully.") {
+
+        showMessage(
+            "reportMessage",
+            "Report submitted successfully. Case ID: " + result.caseId,
+            "green"
+        );
+
+        document.getElementById("reportForm").reset();
+
+        loadReports();
+
+    } else {
+
+        showMessage(
+            "reportMessage",
+            result.message || "Report submission failed.",
+            "red"
+        );
+
+    }
+
+});
+
+async function loadReports() {
+
+    const reports = await getStudentReports(student.email);
+
+    const list = document.getElementById("reportsList");
+
+    if (!Array.isArray(reports) || reports.length === 0) {
+
+        list.innerHTML =
+            '<p class="empty">No reports submitted yet.</p>';
+
+        return;
+    }
+
+    list.innerHTML = reports.map(report => {
+
+        return `
+            <div class="report-card">
+
+                <h3>${report.item_name}</h3>
+
+                <p>
+                    <strong>Case ID:</strong>
+                    <span class="case-id">${report.case_id}</span>
+                </p>
+
+                <p>
+                    <strong>Type:</strong>
+                    ${report.type}
+                </p>
+
+                <p>
+                    <strong>Category:</strong>
+                    ${report.category}
+                </p>
+
+                <p>
+                    <strong>Color:</strong>
+                    ${report.color}
+                </p>
+
+                <p>
+                    <strong>Location:</strong>
+                    ${report.location}
+                </p>
+
+                <p>
+                    <strong>Description:</strong>
+                    ${report.description}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    <span class="status">${report.status}</span>
+                </p>
+
+                <p>
+                    <strong>Admin Remarks:</strong>
+                    ${report.remarks || "No remarks yet"}
+                </p>
+
+                <p class="notification-date">
+                    Submitted: ${formatDate(report.created_at)}
+                </p>
+
+            </div>
+        `;
+
+    }).join("");
+
+}
+
+async function loadNotifications() {
+
+    const notifications = await getNotifications(student.email);
+
+    const list = document.getElementById("notificationsList");
+
+    if (!Array.isArray(notifications) || notifications.length === 0) {
+
+        list.innerHTML =
+            '<p class="empty">No notifications.</p>';
+
+        return;
+    }
+
+    list.innerHTML = notifications.map(notification => {
+
+        return `
+            <div class="notification-card ${notification.is_read ? "" : "unread"}">
+
+                <p class="notification-message">
+                    ${notification.message}
+                </p>
+
+                <p class="notification-date">
+                    ${formatDate(notification.created_at)}
+                </p>
+
+                ${
+                    notification.is_read
+                    ? ""
+                    : `
+                        <button
+                            class="read-btn"
+                            onclick="markNotification(${notification.id})">
+                            Mark as Read
+                        </button>
+                    `
+                }
+
+            </div>
+        `;
+
+    }).join("");
+
+}
+
+async function markNotification(id) {
+
+    await markNotificationRead(id);
+
+    loadNotifications();
+
+}
+
+async function markAllNotifications() {
+
+    await markAllNotificationsRead(student.email);
+
+    loadNotifications();
+
+}
+
+loadReports();
+loadNotifications();
+
+</script>
+
+</body>
+</html>

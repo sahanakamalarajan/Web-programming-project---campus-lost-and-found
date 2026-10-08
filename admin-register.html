@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Registration</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f2f5f9;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.box {
+    width: 100%;
+    max-width: 450px;
+    background: white;
+    padding: 35px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form input,
+.form select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    background: white;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 6px;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.register-btn:hover {
+    background: #1d4ed8;
+}
+
+.message {
+    text-align: center;
+    min-height: 20px;
+}
+
+.login-link {
+    text-align: center;
+}
+
+.login-link a {
+    color: #2563eb;
+    text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="box">
+
+        <h1>Admin Registration</h1>
+
+        <p class="subtitle">
+            Create your administrator account
+        </p>
+
+        <div class="form">
+
+            <input
+                type="text"
+                id="adminRegisterName"
+                placeholder="Admin Name"
+            >
+
+            <input
+                type="email"
+                id="adminRegisterEmail"
+                placeholder="Admin Email"
+            >
+
+            <input
+                type="password"
+                id="adminRegisterPassword"
+                placeholder="Password"
+            >
+
+            <input
+                type="tel"
+                id="adminRegisterPhone"
+                placeholder="Phone Number"
+            >
+
+            <select id="adminRegisterDepartment">
+
+                <option value="">
+                    Select Department
+                </option>
+
+                <option value="Administration">
+                    Administration
+                </option>
+
+                <option value="Computer Science">
+                    Computer Science
+                </option>
+
+                <option value="Information Technology">
+                    Information Technology
+                </option>
+
+                <option value="Student Affairs">
+                    Student Affairs
+                </option>
+
+                <option value="Other">
+                    Other
+                </option>
+
+            </select>
+
+            <button
+                type="button"
+                class="register-btn"
+                id="adminRegisterButton"
+            >
+                Register Admin
+            </button>
+
+            <p
+                id="adminRegisterMessage"
+                class="message"
+            ></p>
+
+            <div class="login-link">
+                <a href="index.html">
+                    Back to Login
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+document.getElementById("adminRegisterButton")
+.addEventListener("click", async function() {
+
+    const name =
+        document.getElementById("adminRegisterName")
+        .value.trim();
+
+    const email =
+        document.getElementById("adminRegisterEmail")
+        .value.trim();
+
+    const password =
+        document.getElementById("adminRegisterPassword")
+        .value.trim();
+
+    const phone =
+        document.getElementById("adminRegisterPhone")
+        .value.trim();
+
+    const department =
+        document.getElementById("adminRegisterDepartment")
+        .value;
+
+    const message =
+        document.getElementById("adminRegisterMessage");
+
+    if (!name || !email || !password || !phone || !department) {
+
+        message.textContent =
+            "Please fill all fields.";
+
+        message.style.color = "red";
+
+        return;
+    }
+
+    message.textContent = "Registering...";
+    message.style.color = "blue";
+
+    try {
+
+        const response = await fetch(
+            "http://localhost:3000/api/admin/register",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    password: password,
+                    phone: phone,
+                    department: department
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            message.textContent =
+                data.message || "Registration failed.";
+
+            message.style.color = "red";
+
+            return;
+        }
+
+        message.textContent =
+            "Admin registration successful!";
+
+        message.style.color = "green";
+
+        setTimeout(function() {
+
+            window.location.href = "index.html";
+
+        }, 1200);
+
+    } catch (error) {
+
+        message.textContent =
+            "Cannot connect to backend server.";
+
+        message.style.color = "red";
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
